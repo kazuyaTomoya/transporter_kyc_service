@@ -11,8 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cpu \
-    && pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --index-url https://pypi.org/simple \
+    filelock typing-extensions==4.15.0 sympy networkx jinja2 fsspec \
+    && pip install --no-cache-dir --no-deps --index-url https://download.pytorch.org/whl/cpu \
+        torch==2.2.2 torchvision==0.17.2 \
+    && pip install --no-cache-dir --index-url https://pypi.org/simple -r requirements.txt
 
 COPY main.py .
 RUN mkdir -p models \
