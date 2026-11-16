@@ -10,26 +10,19 @@ FastAPI service used by the transporter creation form. It checks the KTP file ag
 
 The linked project only compares a KTP portrait with a selfie; it does not check that the KTP is held in the selfie. This service adds hand-landmark overlap with the detected card area and checks that the front-side portrait and text regions form a clear card-shaped group. These are image-based checks, not liveness detection, and should be calibrated using representative XPDC photos before production use.
 
-## Run on the VPS
+## Run on the Hostinger VPS
 
-1. Copy this directory to the VPS and create `.env` from `.env.example`. Set `KYC_API_KEY` to a private random value; do not expose it to browser JavaScript.
-2. Build and start the container:
-
-   ```sh
-   docker compose up -d --build
-   ```
-
-3. Confirm the service locally on the VPS at `http://127.0.0.1:8183/health`.
+1. Add `main.py`, `Dockerfile`, `requirements.txt`, `docker-compose.yaml`, and this README to the public GitHub repository. Do not add an API key or an `.env` file. The Dockerfile downloads the KTP detector checkpoint during build instead of storing the model binary in this repository.
+2. In Hostinger Docker Manager, create a new Compose project named `transporter-kyc` from the `docker-compose.yaml` URL. Set `KYC_API_KEY` in the project Environment section to a private random value and set `KYC_FACE_THRESHOLD` to `0.60`.
+3. The project creates its own Docker network and exposes port 8000 only inside that network. Connect `supabase-caddy` to this project network, then add a Caddy route for `/transporter-kyc/*` to `xpdc-transporter-kyc:8000`. Do not publish port 8000 to the internet.
 4. Set these environment variables for the PHP application:
 
    ```text
-   TRANSPORTER_KYC_API_URL=http://127.0.0.1:8183/verify
-   TRANSPORTER_KYC_API_KEY=<same value as KYC_API_KEY>
+   TRANSPORTER_KYC_API_URL=https://srv1606835.hstgr.cloud/transporter-kyc/verify
+   TRANSPORTER_KYC_API_KEY=<same value as the project KYC_API_KEY>
    ```
 
    PHP must allow the two verification images in one request: set `upload_max_filesize` to at least `8M` and `post_max_size` to at least `16M`.
-
-If PHP runs in a different container or host, `127.0.0.1` will point to that PHP environment. Connect the containers through a private Docker network or use a private TLS endpoint reachable only by the PHP host, then set `TRANSPORTER_KYC_API_URL` accordingly. Do not expose port 8183 publicly.
 
 The service accepts multipart fields `ktp_image` and `selfie_image`, requires the `X-KYC-API-Key` header, limits each image to 7 MB, and does not write uploaded images to disk.
 

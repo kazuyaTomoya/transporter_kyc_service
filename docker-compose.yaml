@@ -1,10 +1,12 @@
 services:
   transporter-kyc:
-    build: .
+    build:
+      context: https://github.com/kazuyaTomoya/transporter_kyc_service.git#main
+      dockerfile: Dockerfile
     container_name: xpdc-transporter-kyc
     restart: unless-stopped
     environment:
       KYC_API_KEY: ${KYC_API_KEY:?set KYC_API_KEY in .env}
       KYC_FACE_THRESHOLD: ${KYC_FACE_THRESHOLD:-0.60}
-    ports:
-      - "127.0.0.1:8183:8000"
+    expose:
+      - "8000"
